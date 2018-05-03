@@ -1,0 +1,39 @@
+#!/bin/bash
+
+centerskin=false
+erosion=false
+dilation=true
+
+w=1920
+h=1080
+
+param=''
+[ $centerskin == true ] && param="$param --allow-center-skin"
+[ $erosion == true ] && param="$param --with-erosion"
+[ $erosion == false ] && param="$param --without-erosion"
+[ $dilation == true ] && param="$param --with-dilation"
+[ $dilation == false ] && param="$param --without-dilation"
+[ "$w" ] && param="$param -w $w"
+[ "$h" ] && param="$param -h $h"
+
+run() {
+	echo bin/cvgame $param "$@"
+	bin/cvgame $param "$@"
+}
+
+
+make clean
+make -j8
+
+run
+sleep 1
+run --max-ball-count 5
+sleep 1
+run --max-ball-count 5 --spawn-remove-balls
+sleep 1
+run --max-ball-count 5 --spawn-remove-balls --enable-koike
+sleep 1
+run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin
+sleep 1
+run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore
+
