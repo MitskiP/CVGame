@@ -3,7 +3,9 @@
 Physics::Physics() {
 	initialized = false;
 }
-void Physics::init(int frameDuration, Mat frame, int mbc, bool db, bool ek, bool es, bool eb) {
+void Physics::init(int frameDuration, Mat frame, int mbc, bool db, bool ek, bool es, bool eb, bool game) {
+	balls.clear();
+
 	w = frame.cols;
 	h = frame.rows;
 //	Ball b = Ball(Point2d(90, h/2), Point2d(0.0, 10.0));
@@ -21,19 +23,34 @@ void Physics::init(int frameDuration, Mat frame, int mbc, bool db, bool ek, bool
 	enableSpin = es;
 	enableBlood = eb;
 	MAX_BALL_COUNT = mbc;
+	isGame = game;
 	
 	botBorderHeight = 100;
+	finish = false;
+	
+	if (isGame)
+		botBorderHeight = 15;
 	
 	// load face image
-	face = imread("res/face.png", IMREAD_UNCHANGED);
+	face = imread("res/face2.png", IMREAD_UNCHANGED);
 	float factor = (float)DEFAULT_BALL_RADIUS*2/face.rows;
 	resize(face, face, Size(), factor, factor);
+	
+	updateSpikes();
+}
+void Physics::updateSpikes() {
+	int ww = w / NUM_SPIKES;
+	for (int i = 0; i < NUM_SPIKES; i++) {
+		spikePoints[i][0] = Point(i*ww + ww/2, h - botBorderHeight);
+		spikePoints[i][1] = Point(i*ww, h);
+		spikePoints[i][2] = Point((i+1)*ww, h);
+	}
 }
 void Physics::generateBall() {
 	if (standardBallsCount < MAX_BALL_COUNT) {
 		if (total_time - last_ball_creation_time > standardBallsCount*3000/MAX_BALL_COUNT) {
 			last_ball_creation_time = total_time;
-			Ball b = Ball(Point2d(rand()%(w-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS, rand()%(h/2-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS),
+			Ball b = Ball(Point2d(rand()%(w-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS, rand()%(h/4-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS),
 					Point2d(rand()%10, rand()%10));
 			b.newRotationSpeed();
 			balls.push_back(b);
@@ -41,31 +58,47 @@ void Physics::generateBall() {
 		}
 	}
 }
+Ball Physics::generateBlood(int i, float factor) {
+	Point2d dv = Point2d(rand()%BLOOD_SPREAD, rand()%BLOOD_SPREAD);
+	Ball b = Ball(balls[i].getPos(), balls[i].getVel());
+	b.getVel().x = b.getVel().x*factor + dv.x;
+	b.getVel().y = b.getVel().y*factor + dv.y;
+	b.setRadius(DEFAULT_BALL_RADIUS/3);
+	b.setColor(Scalar(0, 0, 255));
+	b.setType(BallType::BLOOD);
+	b.setTTL(BLOOD_TTL);
+	b.setDamage(DAMAGE_PER_BLOOD);
+	return b;
+}
 bool Physics::killBall(int i) {
-	if (balls[i].getType() != BallType::DEFAULT)
-		return false;
 	if (disappearingBalls) {
-		if (enableBlood) {
+		if (enableBlood && balls[i].getType() == BallType::DEFAULT) {
 			for (int k = 0; k < BLOOD_AMOUNT; k++) {
-				Point2d dv = Point2d(rand()%BLOOD_SPREAD, rand()%BLOOD_SPREAD);
-				Ball b = Ball(balls[i].getPos(), balls[i].getVel() + dv);
-				b.setRadius(DEFAULT_BALL_RADIUS/2);
-				b.setColor(Scalar(0, 0, 255));
-				b.setType(BallType::BLOOD);
+				Ball b = generateBlood(i, (float)4/5);
 				balls.push_back(b);
 			}
 		}
+		if (balls[i].getType() == BallType::DEFAULT)
+			standardBallsCount--;
 		balls.erase(balls.begin() + i);
-		standardBallsCount--;
 		//last_ball_creation_time = total_time;
 		return true;
 	}
 	return false;
 }
 void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
+	if (finish)
+		return;
 	total_time += elapsedTime;
 	generateBall();
 	for (unsigned int i = 0; i < balls.size(); i++) {
+		if (balls[i].countTTL(elapsedTime)) {
+			if (killBall(i)) {
+				i--;
+				continue;
+			}
+		}
+
 		balls[i].accelerate(gravity);
 		balls[i].friction(friction);
 		balls[i].move();
@@ -96,6 +129,17 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
 			}
 			balls[i].newRotationSpeed();
 		} else if (balls[i].getType() == BallType::BLOOD && y - r >= h) {
+			if (isGame) {
+				botBorderHeight += balls[i].getDamage();
+				if (botBorderHeight < 0)
+					botBorderHeight = 0;
+				updateSpikes();
+				if (botBorderHeight >= h) {
+					botBorderHeight = h;
+					finish = true;
+					return;
+				}
+			}
 			balls.erase(balls.begin() + i);
 			i--;
 			continue;
@@ -105,8 +149,20 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
 		for(size_t j = i + 1; j < balls.size(); j++) {
 			if (norm(balls[i].getPos() - balls[j].getPos()) < balls[i].getRadius() + balls[j].getRadius()) {
 				balls[i].resolveCollision(balls[j]);
-				balls[i].newRotationSpeed();
-				balls[j].newRotationSpeed();
+				if (balls[i].getType() == BallType::DEFAULT && balls[j].getType() == BallType::DEFAULT) {
+					balls[i].newRotationSpeed(5.0f);
+					balls[j].newRotationSpeed(5.0f);
+					if (isGame) {
+						printf("GENERATE BONUS\n");
+						Ball b = generateBlood(i, 0.0f);
+						b.setColor(Scalar(0, 255, 0));
+						b.setDamage(DAMAGE_PER_BLOOD*-5);
+						balls.push_back(b);
+					}
+				} else {
+					balls[i].newRotationSpeed();
+					balls[j].newRotationSpeed();
+				}
 			}
 		}
 		
@@ -267,6 +323,14 @@ void Physics::drawOverlay(Mat &orig, Mat &img, Point c) {
 	}
 }
 Mat &Physics::draw(Mat &canvas) {
+	if (enableBlood) {
+		for (int i = 0; i < NUM_SPIKES; i++) {
+			fillConvexPoly(canvas, spikePoints[i], 3, Scalar(255, 255, 255));
+		}
+	} else {
+		line(canvas, Point(0, h-botBorderHeight), Point(w, h-botBorderHeight), Scalar(255, 255, 255));
+	}
+
 	//drawOverlay(canvas, face, Point(w/2, h/2));
 	for (unsigned int i = 0; i < balls.size(); i++) {
 		if (balls[i].getType() == BallType::DEFAULT && enableKoike) {
@@ -278,7 +342,38 @@ Mat &Physics::draw(Mat &canvas) {
 			circle(canvas, balls[i].getPos(), balls[i].getRadius(), balls[i].getColor(), -1);
 		}
 	}
-	line(canvas, Point(0, h-botBorderHeight), Point(w, h-botBorderHeight), Scalar(255, 255, 255));
+//	drawGameOverOverlay(canvas);
+	return canvas;
+}
+Mat &Physics::drawGameOverOverlay(Mat &canvas) {
+	int duration = total_time;
+	string t = to_string(duration/1000);
+	putText(canvas, t, Point(0, 35), FONT_HERSHEY_PLAIN, 3, Scalar::all(255), 2);
+	if (finish) {
+		rectangle(canvas, Point(0, h/4), Point(w, h*3/4), Scalar(0, 0, 0), -1);
+		string dtext = to_string(duration/1000) + "." + to_string(duration%1000) + " seconds!";
+
+		// https://docs.opencv.org/2.4/modules/core/doc/drawing_functions.html#gettextsize
+		string text = "Game Over";
+		int fontFace = FONT_HERSHEY_SCRIPT_COMPLEX;
+		double fontScale = 2;
+		int thickness = 3;
+
+		int baseline1 = 0;
+		int baseline2 = 0;
+		Size textSize1 = getTextSize(text, fontFace, fontScale, thickness, &baseline1);
+		Size textSize2 = getTextSize(dtext, fontFace, fontScale, thickness, &baseline2);
+		baseline1 += thickness;
+		baseline2 += thickness;
+
+		Point textOrg1((w - textSize1.width)/2, h/2 - textSize1.height + baseline1/2);
+		Point textOrg2((w - textSize2.width)/2, h/2 + textSize2.height + baseline2/2);
+		//rectangle(canvas, textOrg + Point(0, baseline), textOrg + Point(textSize.width, -textSize.height), Scalar(0,0,255));
+		putText(canvas, text, textOrg1, fontFace, fontScale, Scalar::all(255), thickness, 8);
+		putText(canvas, dtext, textOrg2, fontFace, fontScale, Scalar::all(255), thickness, 8);
+
+	}
+	
 	return canvas;
 }
 Mat Physics::rotate(Mat &src, double angle) {

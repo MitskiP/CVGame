@@ -28,6 +28,7 @@ int main(int args, char** argv) {
 	bool disappearingBalls = false;
 	bool enableBlood = false;
 	int MAX_BALL_COUNT = 1;
+	bool isGame = false;
 	
 	bool withErosion = false, withDilation = true;
 	
@@ -65,6 +66,14 @@ int main(int args, char** argv) {
 			withDilation = true;
 		} else if (strcmp(argv[i], "--without-dilation") == 0) {
 			withDilation = false;
+		} else if (strcmp(argv[i], "--game") == 0) {
+			disappearingBalls = true;
+			enableKoike = true;
+			enableSpin = true;
+			enableBlood = true;
+			if (MAX_BALL_COUNT < 3)
+				MAX_BALL_COUNT = 5;
+			isGame = true;
 		}
 	}
 
@@ -96,7 +105,7 @@ int main(int args, char** argv) {
 		game = frame.clone();
 		
 		if (!world.isInitialized())
-			world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood);
+			world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 
 		ht.update(frame, removeCenterSkin);
 		world.tick(frame_time, ht.getLabelMask(), ht.getTrackedHands());
@@ -128,6 +137,7 @@ int main(int args, char** argv) {
 		//resize(game, game, Size(), 2.2, 2.2);
 		float displayFactor = min((float)displayHeight / game.rows, (float)displayWidth / game.cols);
 		flip(game, game, 1);
+		world.drawGameOverOverlay(game);
 		resize(game, game, Size(), displayFactor, displayFactor);
 		imshow("presentation", game);
 		#endif
@@ -140,9 +150,11 @@ int main(int args, char** argv) {
 		} else {
 			if (sleep > 0) {
 				int val = waitKey(sleep);
-				if(val == 32 || val == 27 || val == 113) { // space esc q
+				if (val == 32 || val == 27 || val == 113) { // space esc q
 					printf("key = %d\n", val);
 					break;
+				} else if (val == 114) { // r
+					world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 				}
 			} else {
 				printf("too many frames expected ----------------------\n");

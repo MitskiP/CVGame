@@ -25,6 +25,9 @@ run() {
 make clean
 make -j8
 
+run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore
+exit
+
 run
 sleep 1
 run --max-ball-count 5
@@ -36,4 +39,6 @@ sleep 1
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin
 sleep 1
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore
+sleep 1
+run --game
 

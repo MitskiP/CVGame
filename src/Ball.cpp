@@ -8,6 +8,8 @@ Ball::Ball(Point p, Point v) {
 	rotation = 0;
 	rotationSpeed = 0;
 	
+	ttl = TTL_DISABLED;
+	
 	type = BallType::DEFAULT;
 }
 

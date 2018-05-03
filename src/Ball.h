@@ -3,8 +3,10 @@
 
 #include "opencv2/opencv.hpp"
 
-#define DEFAULT_BALL_RADIUS 15
-#define GEN_ROTATION_SPEED_MAX 10
+#define DEFAULT_BALL_RADIUS 25
+#define GEN_ROTATION_SPEED_MAX 20
+
+#define TTL_DISABLED 999999999999
 
 using namespace cv;
 using namespace std;
@@ -26,6 +28,9 @@ private:
 	BallType type;
 
 	bool colliding;
+	
+	double ttl;
+	int damage;
 
 	float mod360(float);
 
@@ -48,6 +53,11 @@ public:
 	double getRotationSpeed() { return rotationSpeed; }
 	void setRotationSpeed(double d) { rotationSpeed = d; }
 	void newRotationSpeed() { rotationSpeed = rand()%(2*GEN_ROTATION_SPEED_MAX) - (GEN_ROTATION_SPEED_MAX-1); }
+	void newRotationSpeed(float f) { newRotationSpeed(); rotationSpeed *= f; }
+	bool countTTL(double d) { if (ttl == TTL_DISABLED) return false; ttl -= d; return ttl <= 0; }
+	void setTTL(double d) { ttl = d; }
+	int getDamage() { return damage; }
+	void setDamage(int r) { damage = r; }
 	
 	double getMass() { return radius; }
 
