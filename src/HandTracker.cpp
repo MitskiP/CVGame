@@ -1,12 +1,10 @@
 #include "HandTracker.h"
 
-HandTracker::HandTracker(bool we, bool wd) {
-	withDilation = wd;
-	withErosion = we;
+HandTracker::HandTracker() {
 }
-void HandTracker::update(Mat &frame, bool removeCenterSkin) {
+void HandTracker::update(Mat &frame, bool we, bool wd, bool removeCenterSkin) {
 	this->frame = frame;
-	calculateSkinMask();
+	calculateSkinMask(we, wd);
 	findConnectedComponents(removeCenterSkin);
 
 	generateAppearedHands();
@@ -127,44 +125,6 @@ void HandTracker::removeLabel(int i) {
 			break;
 	}
 }
-/*
-Mat &HandTracker::getConnectedComponentsFrame() {
-	debugFrame = frame.clone();
-	vector<Vec3b> colors(trackedHands.size()+1);
-	colors[0] = Vec3b(0, 0, 0);
-	vector<bool> drawLabel(nLabels);
-	drawLabel[0] = true;
-	for (size_t i = 1; i < drawLabel.size(); i++)
-		drawLabel[i] = false;
-	for (size_t i = 1; i < colors.size(); i++) {
-		colors[i] = Vec3b(i*255/colors.size(), i*255/colors.size(), i*255/colors.size());
-		printf("bef\n");
-		drawLabel[trackedHands[i-1].getLabel()] = true;
-		printf("aft\n");
-		//colors[i] = Vec3b(rand()&255, rand()&255, rand()&255);
-	}
-	for (int r = 0; r < skinMask.rows; r++) {
-		for (int c = 0; c < skinMask.cols; c++) {
-			int label = labelMask.at<int>(r, c);
-			if (drawLabel[label]) {
-				Vec3b &pixel = debugFrame.at<Vec3b>(r, c);
-				pixel = colors[label];
-			}
-		}
-	}
-//	printf("w/h  %i / %i\n", frame.cols, frame.rows);
-	for (int i = 1; i < nLabels; i++) {
-		if (drawLabel[i]) {
-			double x = centroids.at<double>(i, 0);
-			double y = centroids.at<double>(i, 1);
-			if (x >= 0 && y >= 0) {
-				circle(debugFrame, Point(x, y), 3, Scalar(255, 255, 255), -1);
-			}
-		}
-	}
-	return debugFrame;
-}
-//*/
 //*
 Mat &HandTracker::getConnectedComponentsFrame() {
 	debugFrame = frame.clone();
@@ -244,7 +204,7 @@ Mat &HandTracker::getSkinFrame() {
 	bitwise_and(frame, frame, debugFrame, skinMask);
 	return debugFrame;
 }
-void HandTracker::calculateSkinMask() {
+void HandTracker::calculateSkinMask(bool withErosion, bool withDilation) {
     Scalar lowerBGR = Scalar(20, 40, 95);
     Scalar upperBGR = Scalar(255, 255, 255);
 

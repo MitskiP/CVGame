@@ -32,6 +32,7 @@ int main(int args, char** argv) {
 	
 	bool withErosion = false, withDilation = true;
 	
+	// parse command line options
 	for (int i = 1; i < args; i++) {
 		printf("%s, cmp %d\n", argv[i], strcmp(argv[i], "--allow-center-skin"));
 		if (strcmp(argv[i], "--allow-center-skin") == 0) {
@@ -78,7 +79,7 @@ int main(int args, char** argv) {
 	}
 
 
-	HandTracker ht = HandTracker(withErosion, withDilation);
+	HandTracker ht = HandTracker();
 	Physics world;
 
 	Mat display;
@@ -90,13 +91,13 @@ int main(int args, char** argv) {
 	Mat border;
 	
 	int target_fps = 30;
-	
 	int skipFrames = 1;
 	double frame_time = 1000.0/target_fps;
 	int sleep;
 	high_resolution_clock::time_point start_frame;
 	high_resolution_clock::time_point end_frame;
-	for (;;) {
+
+	while (cap.isOpened()) {
 		start_frame = high_resolution_clock::now();
 
 		Mat frame, game;
@@ -107,7 +108,7 @@ int main(int args, char** argv) {
 		if (!world.isInitialized())
 			world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 
-		ht.update(frame, removeCenterSkin);
+		ht.update(frame, withErosion, withDilation, removeCenterSkin);
 		world.tick(frame_time, ht.getLabelMask(), ht.getTrackedHands());
 		world.draw(game);
 		
@@ -120,21 +121,19 @@ int main(int args, char** argv) {
 				border.at<Vec3b>(i, 0) = Vec3b(255, 255, 255);
 		}
 		
-//		display = frame;
-//		hconcat(display, border, display);
-//		hconcat(display, ht.getSkinFrame(), display);
+		//display = frame;
+		//hconcat(display, border, display);
+		//hconcat(display, ht.getSkinFrame(), display);
 		display = ht.getSkinFrame();
 		hconcat(display, border, display);
 		hconcat(display, world.draw(ht.getConnectedComponentsFrame()), display);
-//		display = ht.getConnectedComponentsFrame();
 		hconcat(display, border, display);
 		hconcat(display, game, display);
-//		display = ht.getConnectedComponentsFrame();
-//		resize(display, display, Size(), 2.0, 2.0);
+		//resize(display, display, Size(), 2.0, 2.0);
 		putText(display, to_string(sleep) + "ms", Point(display.cols-game.cols, 40),  FONT_HERSHEY_PLAIN, 3.0, Scalar(255, 255, 255), 2);
 		imshow("edges", display);
 		#ifdef RELEASE
-		//resize(game, game, Size(), 2.2, 2.2);
+		// resize presentation Mat to screen height or width
 		float displayFactor = min((float)displayHeight / game.rows, (float)displayWidth / game.cols);
 		flip(game, game, 1);
 		world.drawGameOverOverlay(game);
@@ -144,17 +143,43 @@ int main(int args, char** argv) {
 
 		end_frame = high_resolution_clock::now();
 		duration<double, std::milli> time_span = end_frame - start_frame;
+		// calculate remaining time to sleep in order to reach the desired fps
 		sleep = frame_time - time_span.count();
  		if (skipFrames > 0) {
 			skipFrames--;
 		} else {
+			if (sleep > 10) {
+				target_fps++;
+				frame_time = 1000.0/target_fps;
+				printf("fps = %d\n", target_fps);
+			} else if (sleep <= 5) {
+				target_fps--;
+				frame_time = 1000.0/target_fps;
+				printf("fps = %d\n", target_fps);
+			}
 			if (sleep > 0) {
 				int val = waitKey(sleep);
-				if (val == 32 || val == 27 || val == 113) { // space esc q
+				if (val > 0) {
 					printf("key = %d\n", val);
-					break;
-				} else if (val == 114) { // r
-					world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+					switch (val) {
+					case 32:  // space
+					case 27:  // esc
+					case 113: // q
+						cap.release();
+						break;
+					case 114: // r
+						world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+						break;
+					case 99: // c
+						removeCenterSkin = !removeCenterSkin;
+						break;
+					case 101: // e
+						withErosion = !withErosion;
+						break;
+					case 100: // d
+						withDilation = !withDilation;
+						break;
+					}
 				}
 			} else {
 				printf("too many frames expected ----------------------\n");

@@ -24,10 +24,16 @@ OBJECTS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
 EXECUTABLE = cvgame
 TARGET = $(BINDIR)/$(EXECUTABLE)
 
-all: $(SOURCES) $(TARGET)
+EXECUTABLE2 = estimate_camera_fps
+TARGET2 = $(BINDIR)/$(EXECUTABLE2)
 
-$(TARGET): $(OBJECTS) | $(BINDIR)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+all: $(SOURCES) $(TARGET) $(TARGET2)
+
+$(TARGET): $(filter-out obj/$(EXECUTABLE2).o,$(OBJECTS)) | $(BINDIR)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(TARGET2): obj/$(EXECUTABLE2).o | $(BINDIR)
+	$(CC) $(LDFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CC) $(CFLAGS) -o $@ $<

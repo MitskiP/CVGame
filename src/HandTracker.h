@@ -17,7 +17,7 @@ private:
 	vector<Hand> trackedHands;
 
 	Mat frame;
-	void calculateSkinMask();
+	void calculateSkinMask(bool, bool);
 	void removeLabel(int);
 	void findConnectedComponents(bool);
 	void generateAppearedHands();
@@ -32,12 +32,9 @@ private:
 	Mat debugFrame;
 	Mat frameHSV;
 	Mat skinMaskBGR, skinMaskHSV;
-
-	bool withErosion;
-	bool withDilation;
 public:
-	HandTracker(bool, bool);
-	void update(Mat&, bool);
+	HandTracker();
+	void update(Mat&, bool, bool, bool);
 	Mat &getSkinFrame();
 	Mat &getConnectedComponentsFrame();
 	

@@ -2,7 +2,7 @@
 
 centerskin=false
 erosion=false
-dilation=true
+dilation=false
 
 w=1920
 h=1080
@@ -21,9 +21,10 @@ run() {
 	bin/cvgame $param "$@"
 }
 
-
-make clean
-make -j8
+if [ -z "$1" ]; then
+	make clean
+	make -j8
+fi
 
 run
 sleep 1
