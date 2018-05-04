@@ -3,7 +3,7 @@
 Physics::Physics() {
 	initialized = false;
 }
-void Physics::init(int frameDuration, Mat frame, int mbc, bool db, bool ek, bool es, bool eb, bool game) {
+void Physics::init(Mat frame, int mbc, bool db, bool ek, bool es, bool eb, bool game) {
 	balls.clear();
 
 	w = frame.cols;
@@ -17,7 +17,7 @@ void Physics::init(int frameDuration, Mat frame, int mbc, bool db, bool ek, bool
 	last_ball_creation_time = 0;
 	standardBallsCount = 0;
 	gravity = -0.5;
-	friction = 0.995; // percentage
+	friction = 0.990; // percentage
 	disappearingBalls = db;
 	enableKoike = ek;
 	enableSpin = es;
@@ -99,10 +99,10 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
 			}
 		}
 
-		balls[i].accelerate(gravity);
+		balls[i].accelerate(elapsedTime, gravity);
 		balls[i].friction(friction);
-		balls[i].move();
-		
+		balls[i].move(elapsedTime);
+
 		// collision on borders
 		double x = balls[i].getPos().x;
 		double y = balls[i].getPos().y;

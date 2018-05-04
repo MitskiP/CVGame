@@ -50,7 +50,7 @@ private:
 
 public:
 	Physics();
-	void init(int, Mat, int, bool, bool, bool, bool, bool);
+	void init(Mat, int, bool, bool, bool, bool, bool);
 	bool isInitialized() { return initialized; }
 	void tick(double, Mat&, vector<Hand>&);
 	Mat &draw(Mat&);

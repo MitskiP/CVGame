@@ -1,0 +1,43 @@
+#pragma once
+
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include "opencv2/opencv.hpp"
+
+using namespace cv;
+
+class SharedVideoCapture {
+public:
+	SharedVideoCapture(int);
+	~SharedVideoCapture();
+
+	bool isOpened();
+	int read(Mat&);
+	void release();
+
+private:
+	VideoCapture cap;
+	std::mutex mutex_;
+	std::condition_variable cond_;
+}; 
+SharedVideoCapture::~SharedVideoCapture() {}
+SharedVideoCapture::SharedVideoCapture(int i) {
+	std::unique_lock<std::mutex> mlock(mutex_);
+	cap = VideoCapture(i);
+	mlock.unlock();
+}
+bool SharedVideoCapture::isOpened() {
+	return cap.isOpened();
+}
+int SharedVideoCapture::read(Mat &mat) {
+	std::unique_lock<std::mutex> mlock(mutex_);
+	int i = cap.read(mat);
+	mlock.unlock();
+	return i;
+}
+void SharedVideoCapture::release() {
+	std::unique_lock<std::mutex> mlock(mutex_);
+	cap.release();
+	mlock.unlock();
+}

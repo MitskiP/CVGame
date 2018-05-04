@@ -8,6 +8,8 @@
 
 #define TTL_DISABLED 999999999999
 
+#define RELATIVE_ET 30.0 // if elapsed time == RELATIVE_ET, then move exact pixels
+
 using namespace cv;
 using namespace std;
 
@@ -34,6 +36,7 @@ private:
 
 	float mod360(float);
 
+	Point2d movedPos(double et) { return pos+vel*et/RELATIVE_ET; }
 public:
 	Ball(Point, Point);
 	Point2d &getPos() { return pos; }
@@ -63,10 +66,9 @@ public:
 
 	void resolveCollision(Ball&);
 
-	void accelerate(double g) { vel.y -= g; }
+	void accelerate(double et, double g) { vel.y -= g*et/RELATIVE_ET; }
 	void friction(double g) { vel.x *= g; vel.y *= g; rotationSpeed *= g; }
-	Point movedPos() { return pos+vel; }
-	void move() { pos = movedPos(); rotation = mod360(rotation + rotationSpeed); }
+	void move(double et) { pos = movedPos(et); rotation = mod360(rotation + rotationSpeed*et/RELATIVE_ET); }
 };
 
 #endif

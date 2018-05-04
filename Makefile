@@ -5,9 +5,9 @@ SRCDIR = src
 BINDIR = bin
 OBJDIR = obj
 
-OPENCV   = `pkg-config opencv --cflags --libs`
-CFLAGS  += -Wall -Wextra -pedantic -Wno-unused-parameter -c $(OPENCV)
-LDFLAGS += $(OPENCV)
+LIBS   = `pkg-config opencv --cflags --libs` -lpthread
+CFLAGS  += -Wall -Wextra -pedantic -Wno-unused-parameter -c $(LIBS)
+LDFLAGS += $(LIBS)
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -DDEBUG

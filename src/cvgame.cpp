@@ -1,15 +1,34 @@
 #include <ctime>
 #include <ratio>
 #include <chrono>
+#include <thread>
 #include "HandTracker.h"
 #include "Physics.h"
+#include "SharedQueue.h"
+#include "SharedVideoCapture.h"
 
 using namespace std::chrono;
 
-static const int FRAME_DURATION = 30;
+class Page {
+public:
+	Page(Mat m, high_resolution_clock::time_point t) { frame = m; time = t; }
+	Mat frame;
+	high_resolution_clock::time_point time;
+};
+
+SharedVideoCapture cap(0); // open the default camera
+SharedQueue<Page> frames;
+
+void cameraThread() {
+	Mat frame;
+	while (cap.isOpened()) {
+		cap.read(frame);
+		frames.push_back(Page(frame.clone(), high_resolution_clock::now()));
+	}
+	cap.release();
+}
 
 int main(int args, char** argv) {
-	VideoCapture cap(0); // open the default camera
 	if(!cap.isOpened())  // check if we succeeded
 		return -1;
 
@@ -89,49 +108,71 @@ int main(int args, char** argv) {
 	#endif
 	
 	Mat border;
+	bool is_first_frame = true;
 	
-	int target_fps = 30;
-	int skipFrames = 1;
-	double frame_time = 1000.0/target_fps;
 	int sleep;
-	high_resolution_clock::time_point start_frame;
-	high_resolution_clock::time_point end_frame;
+	high_resolution_clock::time_point start_time;
+	high_resolution_clock::time_point end_time;
+	duration<double, std::milli> time_span;
+
+	high_resolution_clock::time_point last_frame_time = high_resolution_clock::now();
+    thread t1(cameraThread);
 
 	while (cap.isOpened()) {
-		start_frame = high_resolution_clock::now();
 
-		Mat frame, game;
-		cap >> frame; // get a new frame from camera
+		if (frames.size() == 0) {
+			//printf("waiting for new frame\n");
+			continue;
+		}
+
+		// start timer and read next frame with timestamp
+		start_time = high_resolution_clock::now();
+		if (frames.size() > 1) {
+			printf("SKIPPING %d frames\n", frames.size()-1);
+			while (frames.size() > 2)
+				frames.pop_front();
+			last_frame_time = frames.front().time;
+			frames.pop_front();
+		}
+		Page p = frames.front();
+		frames.pop_front();
+		duration<double, std::milli> frame_duration = p.time - last_frame_time;
+		last_frame_time = p.time;
+
+		// prepare frame
+		Mat frame = p.frame;
 		flip(frame, frame, 1);
-		game = frame.clone();
+		Mat game = frame.clone();
 		
+		// initialize world
 		if (!world.isInitialized())
-			world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
-
+			world.init(frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+		// handle tick
 		ht.update(frame, withErosion, withDilation, removeCenterSkin);
-		world.tick(frame_time, ht.getLabelMask(), ht.getTrackedHands());
+		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands());
+		// draw world onto game
 		world.draw(game);
-		
-		//cvtColor(frame, display, COLOR_BGR2GRAY);
-		//GaussianBlur(edges, edges, Size(7,7), 1.5, 1.5);
-		//Canny(edges, edges, 0, 30, 3);
-		if (skipFrames == 1) {
+
+		// initialize mat border
+		if (border.rows == 0) {
 			border = Mat(frame.rows, 1, frame.type());
 			for (int i = 0; i < frame.rows; i++)
 				border.at<Vec3b>(i, 0) = Vec3b(255, 255, 255);
 		}
 		
+		// create mat to show
 		//display = frame;
-		//hconcat(display, border, display);
-		//hconcat(display, ht.getSkinFrame(), display);
 		display = ht.getSkinFrame();
 		hconcat(display, border, display);
 		hconcat(display, world.draw(ht.getConnectedComponentsFrame()), display);
 		hconcat(display, border, display);
 		hconcat(display, game, display);
 		//resize(display, display, Size(), 2.0, 2.0);
-		putText(display, to_string(sleep) + "ms", Point(display.cols-game.cols, 40),  FONT_HERSHEY_PLAIN, 3.0, Scalar(255, 255, 255), 2);
+		// show the frame duration for both camera thread and this thread (of last time)
+		putText(display, to_string((int)time_span.count()) + " vs " + to_string((int)frame_duration.count()), Point(display.cols-game.cols, 40),  FONT_HERSHEY_PLAIN, 3.0, Scalar(255, 255, 255), 2);
 		imshow("edges", display);
+
+		// create presentation mat
 		#ifdef RELEASE
 		// resize presentation Mat to screen height or width
 		float displayFactor = min((float)displayHeight / game.rows, (float)displayWidth / game.cols);
@@ -141,54 +182,47 @@ int main(int args, char** argv) {
 		imshow("presentation", game);
 		#endif
 
-		end_frame = high_resolution_clock::now();
-		duration<double, std::milli> time_span = end_frame - start_frame;
-		// calculate remaining time to sleep in order to reach the desired fps
-		sleep = frame_time - time_span.count();
- 		if (skipFrames > 0) {
-			skipFrames--;
-		} else {
-			if (sleep > 10) {
-				target_fps++;
-				frame_time = 1000.0/target_fps;
-				printf("fps = %d\n", target_fps);
-			} else if (sleep <= 5) {
-				target_fps--;
-				frame_time = 1000.0/target_fps;
-				printf("fps = %d\n", target_fps);
-			}
-			if (sleep > 0) {
-				int val = waitKey(sleep);
-				if (val > 0) {
-					printf("key = %d\n", val);
-					switch (val) {
-					case 32:  // space
-					case 27:  // esc
-					case 113: // q
-						cap.release();
-						break;
-					case 114: // r
-						world.init(FRAME_DURATION, frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
-						break;
-					case 99: // c
-						removeCenterSkin = !removeCenterSkin;
-						break;
-					case 101: // e
-						withErosion = !withErosion;
-						break;
-					case 100: // d
-						withDilation = !withDilation;
-						break;
-					}
+		end_time = high_resolution_clock::now();
+		time_span = end_time - start_time;
+		// calculate remaining time to sleep in order to match camera's fps
+		sleep = frame_duration.count() - time_span.count() - 1; // substract 1 so we are always faster than camera
+		//printf("sleep = %d ms\n", sleep);
+		if (is_first_frame) {
+			sleep = 1;
+			is_first_frame = false;
+		}
+		if (sleep > 0) {
+			int val = waitKey(sleep);
+			if (val > 0) {
+				printf("key = %d\n", val);
+				switch (val) {
+				case 32:  // space
+				case 27:  // esc
+				case 113: // q
+					cap.release();
+					break;
+				case 114: // r
+					world.init(frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+					break;
+				case 99: // c
+					removeCenterSkin = !removeCenterSkin;
+					break;
+				case 101: // e
+					withErosion = !withErosion;
+					break;
+				case 100: // d
+					withDilation = !withDilation;
+					break;
 				}
-			} else {
-				printf("too many frames expected ----------------------\n");
-				printf("we are behind by %dms\n", sleep);
-				waitKey(1);
-				//exit(1);
 			}
+		} else {
+			printf("too many frames expected ----------------------\n");
+			printf("we are behind by %d ms\n", sleep);
+			waitKey(1);
+			//exit(1);
 		}
 	}
 	// the camera will be deinitialized automatically in VideoCapture destructor
+	t1.join();
 	return 0;
 }
