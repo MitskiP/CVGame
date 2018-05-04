@@ -1,18 +1,12 @@
 #include "Physics.h"
 
 Physics::Physics() {
-	initialized = false;
 }
-void Physics::init(Mat frame, int mbc, bool db, bool ek, bool es, bool eb, bool game) {
+void Physics::init(int width, int height, int mbc, bool db, bool ek, bool es, bool eb, bool game) {
 	balls.clear();
 
-	w = frame.cols;
-	h = frame.rows;
-//	Ball b = Ball(Point2d(90, h/2), Point2d(0.0, 10.0));
-//	Ball b2 = Ball(Point2d(180, h/2), Point2d(0.0, 10.0));
-//	balls.push_back(b);
-//	balls.push_back(b2);
-	initialized = true;
+	w = width;
+	h = height;
 	total_time = 0;
 	last_ball_creation_time = 0;
 	standardBallsCount = 0;

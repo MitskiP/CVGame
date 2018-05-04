@@ -97,25 +97,36 @@ int main(int args, char** argv) {
 		}
 	}
 
-
+	int w = cap.get(CAP_PROP_FRAME_WIDTH);
+	int h = cap.get(CAP_PROP_FRAME_HEIGHT);
+	
+    // initialize mat border
+	Mat border = Mat(h, 1, cap.get(CAP_PROP_FORMAT));
+	for (int i = 0; i < h; i++)
+		border.at<Vec3b>(i, 0) = Vec3b(255, 255, 255);
+	
+	// initialize world
 	HandTracker ht = HandTracker();
 	Physics world;
+	world.init(w, h, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+
+	float displayFactor = min((float)displayHeight / h, (float)displayWidth / w);
 
 	Mat display;
 	namedWindow("edges",1);
 	#ifdef RELEASE
 	namedWindow("presentation",1);
 	#endif
-	
-	Mat border;
+
+	// prepare required variables for the main loop
 	bool is_first_frame = true;
-	
 	int sleep;
 	high_resolution_clock::time_point start_time;
 	high_resolution_clock::time_point end_time;
 	duration<double, std::milli> time_span;
-
 	high_resolution_clock::time_point last_frame_time = high_resolution_clock::now();
+
+	// start camera thread
     thread t1(cameraThread);
 
 	while (cap.isOpened()) {
@@ -144,22 +155,12 @@ int main(int args, char** argv) {
 		flip(frame, frame, 1);
 		Mat game = frame.clone();
 		
-		// initialize world
-		if (!world.isInitialized())
-			world.init(frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 		// handle tick
 		ht.update(frame, withErosion, withDilation, removeCenterSkin);
 		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands());
 		// draw world onto game
 		world.draw(game);
 
-		// initialize mat border
-		if (border.rows == 0) {
-			border = Mat(frame.rows, 1, frame.type());
-			for (int i = 0; i < frame.rows; i++)
-				border.at<Vec3b>(i, 0) = Vec3b(255, 255, 255);
-		}
-		
 		// create mat to show
 		//display = frame;
 		display = ht.getSkinFrame();
@@ -175,7 +176,6 @@ int main(int args, char** argv) {
 		// create presentation mat
 		#ifdef RELEASE
 		// resize presentation Mat to screen height or width
-		float displayFactor = min((float)displayHeight / game.rows, (float)displayWidth / game.cols);
 		flip(game, game, 1);
 		world.drawGameOverOverlay(game);
 		resize(game, game, Size(), displayFactor, displayFactor);
@@ -202,7 +202,7 @@ int main(int args, char** argv) {
 					cap.release();
 					break;
 				case 114: // r
-					world.init(frame, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
+					world.init(w, h, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 					break;
 				case 99: // c
 					removeCenterSkin = !removeCenterSkin;

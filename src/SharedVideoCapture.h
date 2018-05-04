@@ -15,6 +15,8 @@ public:
 	bool isOpened();
 	int read(Mat&);
 	void release();
+	
+	double get(int);
 
 private:
 	VideoCapture cap;
@@ -40,4 +42,7 @@ void SharedVideoCapture::release() {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	cap.release();
 	mlock.unlock();
+}
+double SharedVideoCapture::get(int i) {
+	return cap.get(i);
 }

@@ -18,7 +18,6 @@ using namespace std;
 
 class Physics {
 private:
-	bool initialized;
 	bool disappearingBalls;
 	bool enableKoike, enableSpin, enableBlood, isGame;
 	bool finish;
@@ -50,8 +49,7 @@ private:
 
 public:
 	Physics();
-	void init(Mat, int, bool, bool, bool, bool, bool);
-	bool isInitialized() { return initialized; }
+	void init(int, int, int, bool, bool, bool, bool, bool);
 	void tick(double, Mat&, vector<Hand>&);
 	Mat &draw(Mat&);
 	Mat &drawGameOverOverlay(Mat&);
