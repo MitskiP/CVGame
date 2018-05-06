@@ -28,6 +28,8 @@ fi
 
 clear
 echo tracking demo
+echo
+echo toggle tracking with T!
 read
 run --tracking-demo
 clear
@@ -36,10 +38,14 @@ read
 run
 clear
 echo 5 balls
+echo
+echo next: disappearing balls
 read
 run --max-ball-count 5
 clear
 echo appear / disappearing balls
+echo
+echo disappearing balls are boring...
 read
 run --max-ball-count 5 --spawn-remove-balls
 clear
@@ -48,14 +54,16 @@ read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike
 clear
 echo spin
+echo
+echo enable mp with M!
 read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin
 clear
 echo gore
 read
-run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore
+run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore --enable-mp
 clear
 echo game
 read
-run --game
+run --game --enable-mp
 

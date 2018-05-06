@@ -19,6 +19,8 @@ enum BallType {
 
 class Ball {
 private:
+	Mat face;
+
 	Point2d pos;
 	Point2d vel;
 	float rotation;
@@ -60,6 +62,8 @@ public:
 	void setTTL(double d) { ttl = d; }
 	int getDamage() { return damage; }
 	void setDamage(int r) { damage = r; }
+	Mat getFace() { return face; }
+	void setFace(Mat m) { face = m; }
 	
 	double getMass() { return radius; }
 

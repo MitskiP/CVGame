@@ -54,7 +54,8 @@ void Ball::resolveCollision(Ball &ball) {
 	if (vn > 0.0) return;
 
 	// collision impulse
-	double restitution = 0.85;
+	//double restitution = 0.85;
+	double restitution = 0.75;
 	double i = (-(1.0 + restitution) * vn) / (im1 + im2);
 	Point2d impulse;
 	impulse.x = mtd.x * i;

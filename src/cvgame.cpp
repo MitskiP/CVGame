@@ -54,12 +54,15 @@ int main(int args, char** argv) {
 	bool trackHands = true;
 	bool trackingDemo = false;
 	
+	bool enableMP = false;
+	
 	// parse command line options
 	for (int i = 1; i < args; i++) {
 		printf("%s, cmp %d\n", argv[i], strcmp(argv[i], "--allow-center-skin"));
 		if (strcmp(argv[i], "--allow-center-skin") == 0) {
 			removeCenterSkin = false;
 		} else if (strcmp(argv[i], "--tracking-demo") == 0) {
+			removeCenterSkin = false;
 			trackHands = false;
 			trackingDemo = true;
 		} else if (strcmp(argv[i], "--hold-balls") == 0) {
@@ -92,6 +95,8 @@ int main(int args, char** argv) {
 			withDilation = true;
 		} else if (strcmp(argv[i], "--without-dilation") == 0) {
 			withDilation = false;
+		} else if (strcmp(argv[i], "--enable-mp") == 0) {
+			enableMP = true;
 		} else if (strcmp(argv[i], "--game") == 0) {
 			disappearingBalls = true;
 			enableKoike = true;
@@ -164,7 +169,7 @@ int main(int args, char** argv) {
 		
 		// handle tick
 		ht.update(frame, withErosion, withDilation, removeCenterSkin);
-		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands());
+		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands(), enableMP);
 		// draw world onto game
 		if (!trackingDemo)
 			world.draw(game);
@@ -230,6 +235,10 @@ int main(int args, char** argv) {
 					break;
 				case 116: // t
 					trackHands = !trackHands;
+					break;
+				case 109: // m
+					enableMP = !enableMP;
+					break;
 				}
 			}
 		} else {

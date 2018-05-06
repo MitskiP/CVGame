@@ -32,10 +32,10 @@ private:
 
 	Point spikePoints[NUM_SPIKES][3];
 
-	Mat face;
+	vector<Mat> faces;
 
 	Ball generateBlood(int, float);
-	void generateBall();
+	void generateBall(bool);
 	bool killBall(int);
 	void drawOverlay(Mat&, Mat&, Point);
 	Mat rotate(Mat&, double);
@@ -49,7 +49,7 @@ private:
 public:
 	Physics();
 	void init(int, int, int, bool, bool, bool, bool, bool);
-	void tick(double, Mat&, vector<Hand>&);
+	void tick(double, Mat&, vector<Hand>&, bool);
 	Mat &draw(Mat&);
 	Mat &drawGameOverOverlay(Mat&);
 	

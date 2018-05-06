@@ -26,9 +26,13 @@ void Physics::init(int width, int height, int mbc, bool db, bool ek, bool es, bo
 		botBorderHeight = 15;
 	
 	// load face image
-	face = imread("res/face2.png", IMREAD_UNCHANGED);
-	float factor = (float)DEFAULT_BALL_RADIUS*2/face.rows;
-	resize(face, face, Size(), factor, factor);
+	string paths[] = { "res/face2.png", "res/facem.png" };
+	for (size_t i = 0; i < sizeof(paths)/sizeof(paths[0]); i++) {
+		Mat face = imread(paths[i], IMREAD_UNCHANGED);
+		float factor = (float)DEFAULT_BALL_RADIUS*2/face.rows;
+		resize(face, face, Size(), factor, factor);
+		faces.push_back(face);
+	}
 	
 	updateSpikes();
 }
@@ -40,13 +44,17 @@ void Physics::updateSpikes() {
 		spikePoints[i][2] = Point((i+1)*ww, h);
 	}
 }
-void Physics::generateBall() {
+void Physics::generateBall(bool enableMP) {
 	if (standardBallsCount < MAX_BALL_COUNT) {
 		if (total_time - last_ball_creation_time > standardBallsCount*3000/MAX_BALL_COUNT) {
 			last_ball_creation_time = total_time;
 			Ball b = Ball(Point2d(rand()%(w-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS, rand()%(h/4-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS),
 					Point2d(rand()%10, rand()%10));
 			b.newRotationSpeed();
+			int s = 0;
+			if (enableMP && faces.size() > 1 && (rand()%10) > 7) // 20%
+				s = rand()%(faces.size()-1) + 1;
+			b.setFace(faces[s]);
 			balls.push_back(b);
 			standardBallsCount++;
 		}
@@ -80,11 +88,11 @@ bool Physics::killBall(int i) {
 	}
 	return false;
 }
-void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
+void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool enableMP) {
 	if (finish)
 		return;
 	total_time += elapsedTime;
-	generateBall();
+	generateBall(enableMP);
 	for (unsigned int i = 0; i < balls.size(); i++) {
 		if (balls[i].countTTL(elapsedTime)) {
 			if (killBall(i)) {
@@ -329,9 +337,9 @@ Mat &Physics::draw(Mat &canvas) {
 	//drawOverlay(canvas, face, Point(w/2, h/2));
 	for (unsigned int i = 0; i < balls.size(); i++) {
 		if (balls[i].getType() == BallType::DEFAULT && enableKoike) {
-			Mat rot;
-			if (enableSpin) rot = rotate(face, balls[i].getRotation());
-			else rot = face;
+			Mat rot = balls[i].getFace();
+			if (enableSpin)
+				rot = rotate(rot, balls[i].getRotation());
 			drawOverlay(canvas, rot, balls[i].getPos());
 		} else {
 			circle(canvas, balls[i].getPos(), balls[i].getRadius(), balls[i].getColor(), -1);
