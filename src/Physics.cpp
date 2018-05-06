@@ -235,10 +235,8 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands) {
 		// forcefully change position
 		int forceTo = (max + TOTAL_DIRECTIONS/4) % TOTAL_DIRECTIONS;
 		float forceToPI = forceTo * 2*CV_PI / TOTAL_DIRECTIONS;
-		//vel = balls[i].getVel();
 		vel = balls[i].getPos();
 		Point2d force = Point2d(cos(forceToPI), sin(forceToPI)) * 2*balls[i].getRadius();
-		//balls[i].setVel(vel + force * relevant_px / total_px);
 		balls[i].setPos(vel + force * relevant_px / total_px);
 	}
 }

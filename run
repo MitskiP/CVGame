@@ -26,17 +26,36 @@ if [ -z "$1" ]; then
 	make -j8
 fi
 
+clear
+echo tracking demo
+read
+run --tracking-demo
+clear
+echo 1 ball
+read
 run
-sleep 1
+clear
+echo 5 balls
+read
 run --max-ball-count 5
-sleep 1
+clear
+echo appear / disappearing balls
+read
 run --max-ball-count 5 --spawn-remove-balls
-sleep 1
+clear
+echo koike ball
+read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike
-sleep 1
+clear
+echo spin
+read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin
-sleep 1
+clear
+echo gore
+read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore
-sleep 1
+clear
+echo game
+read
 run --game
 

@@ -36,7 +36,7 @@ public:
 	HandTracker();
 	void update(Mat&, bool, bool, bool);
 	Mat &getSkinFrame();
-	Mat &getConnectedComponentsFrame();
+	Mat &getConnectedComponentsFrame(bool);
 	
 	Mat &getLabelMask() { return labelMask; }
 	vector<Hand> &getTrackedHands() { return trackedHands; }

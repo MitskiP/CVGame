@@ -126,33 +126,34 @@ void HandTracker::removeLabel(int i) {
 	}
 }
 //*
-Mat &HandTracker::getConnectedComponentsFrame() {
+Mat &HandTracker::getConnectedComponentsFrame(bool track) {
 	debugFrame = frame.clone();
 
-	vector<bool> drawLabel(nLabels);
-	drawLabel[0] = true;
+	vector<int> drawLabel(nLabels);
+	drawLabel[0] = 0;
 	for (size_t i = 1; i < drawLabel.size(); i++)
-		drawLabel[i] = false;
+		drawLabel[i] = -1;
 	for (size_t i = 0; i < trackedHands.size(); i++) {
 		//if (norm(trackedHands[i].getVel()) > 2 )
-			drawLabel[trackedHands[i].getLabel()] = true;
+			drawLabel[trackedHands[i].getLabel()] = i;
 	}
 
 	vector<Vec3b> colors(nLabels);
 	colors[0] = Vec3b(0, 0, 0);
-	int c = 1;
 	for (int i = 1; i < nLabels; i++) {
-		if (drawLabel[i])
-			c++;
-		int val = c*255/(trackedHands.size()+2); //i*255/nLabels
-		colors[i] = Vec3b(val, val, val);
-		//colors[i] = Vec3b(rand()&255, rand()&255, rand()&255);
+		int val;
+		if (track)
+			val = (drawLabel[i]+1)*255/(trackedHands.size()+1);
+		else
+			val = ((rand()%7)+1)*255/8;
+			//val = i*255/nLabels;
+		colors[i] = Vec3b(val, 255-val, 255-val);
 	}
 	for (int r = 0; r < skinMask.rows; r++) {
 		for (int c = 0; c < skinMask.cols; c++) {
 			int label = labelMask.at<int>(r, c);
 			Vec3b &pixel = debugFrame.at<Vec3b>(r, c);
-			if (drawLabel[label]) {
+			if (drawLabel[label] > -1) {
 				pixel = colors[label];
 			} else {
 				pixel = colors[0];
@@ -161,7 +162,7 @@ Mat &HandTracker::getConnectedComponentsFrame() {
 	}
 //	printf("w/h  %i / %i\n", frame.cols, frame.rows);
 	for (int i = 1; i < nLabels; i++) {
-		if (drawLabel[i]) {
+		if (drawLabel[i] > -1) {
 			double x = centroids.at<double>(i, 0);
 			double y = centroids.at<double>(i, 1);
 			if (x >= 0 && y >= 0) {

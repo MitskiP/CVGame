@@ -50,12 +50,18 @@ int main(int args, char** argv) {
 	bool isGame = false;
 	
 	bool withErosion = false, withDilation = true;
+
+	bool trackHands = true;
+	bool trackingDemo = false;
 	
 	// parse command line options
 	for (int i = 1; i < args; i++) {
 		printf("%s, cmp %d\n", argv[i], strcmp(argv[i], "--allow-center-skin"));
 		if (strcmp(argv[i], "--allow-center-skin") == 0) {
 			removeCenterSkin = false;
+		} else if (strcmp(argv[i], "--tracking-demo") == 0) {
+			trackHands = false;
+			trackingDemo = true;
 		} else if (strcmp(argv[i], "--hold-balls") == 0) {
 			disappearingBalls = false;
 		} else if (strcmp(argv[i], "--spawn-remove-balls") == 0) {
@@ -115,7 +121,8 @@ int main(int args, char** argv) {
 	Mat display;
 	namedWindow("edges",1);
 	#ifdef RELEASE
-	namedWindow("presentation",1);
+	if (!trackingDemo)
+		namedWindow("presentation",1);
 	#endif
 
 	// prepare required variables for the main loop
@@ -159,27 +166,35 @@ int main(int args, char** argv) {
 		ht.update(frame, withErosion, withDilation, removeCenterSkin);
 		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands());
 		// draw world onto game
-		world.draw(game);
+		if (!trackingDemo)
+			world.draw(game);
 
 		// create mat to show
 		//display = frame;
 		display = ht.getSkinFrame();
 		hconcat(display, border, display);
-		hconcat(display, world.draw(ht.getConnectedComponentsFrame()), display);
-		hconcat(display, border, display);
-		hconcat(display, game, display);
-		//resize(display, display, Size(), 2.0, 2.0);
-		// show the frame duration for both camera thread and this thread (of last time)
-		putText(display, to_string((int)time_span.count()) + " vs " + to_string((int)frame_duration.count()), Point(display.cols-game.cols, 40),  FONT_HERSHEY_PLAIN, 3.0, Scalar(255, 255, 255), 2);
+		Mat componentsFrame = ht.getConnectedComponentsFrame(trackHands);
+		if (!trackingDemo)
+			componentsFrame = world.draw(componentsFrame);
+		hconcat(display, componentsFrame, display);
+		if (!trackingDemo) {
+			hconcat(display, border, display);
+			hconcat(display, game, display);
+			//resize(display, display, Size(), 2.0, 2.0);
+			// show the frame duration for both camera thread and this thread (of last time)
+			putText(display, to_string((int)time_span.count()) + " vs " + to_string((int)frame_duration.count()), Point(display.cols-game.cols, 40),  FONT_HERSHEY_PLAIN, 3.0, Scalar(255, 255, 255), 2);
+		}
 		imshow("edges", display);
 
 		// create presentation mat
 		#ifdef RELEASE
-		// resize presentation Mat to screen height or width
-		flip(game, game, 1);
-		world.drawGameOverOverlay(game);
-		resize(game, game, Size(), displayFactor, displayFactor);
-		imshow("presentation", game);
+		if (!trackingDemo) {
+			// resize presentation Mat to screen height or width
+			flip(game, game, 1);
+			world.drawGameOverOverlay(game);
+			resize(game, game, Size(), displayFactor, displayFactor);
+			imshow("presentation", game);
+		}
 		#endif
 
 		end_time = high_resolution_clock::now();
@@ -213,6 +228,8 @@ int main(int args, char** argv) {
 				case 100: // d
 					withDilation = !withDilation;
 					break;
+				case 116: // t
+					trackHands = !trackHands;
 				}
 			}
 		} else {
