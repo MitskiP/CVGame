@@ -42,8 +42,10 @@ $(BINDIR) $(OBJDIR):
 	mkdir -p $@
 
 module = uvcvideo
-run: $(TARGET)
+module:
 	lsmod | grep $(module) &>/dev/null || sudo modprobe $(module)
+
+run: module $(TARGET)
 	$(TARGET) ${ARGS}
 
 clean:
