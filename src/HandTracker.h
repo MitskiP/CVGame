@@ -1,5 +1,4 @@
-#ifndef HANDTRACKER_H
-#define HANDTRACKER_H
+#pragma once
 
 #include <stdio.h>
 #include <vector>
@@ -41,5 +40,3 @@ public:
 	Mat &getLabelMask() { return labelMask; }
 	vector<Hand> &getTrackedHands() { return trackedHands; }
 };
-
-#endif

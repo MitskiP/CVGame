@@ -1,5 +1,4 @@
-#ifndef BALL_H
-#define BALL_H
+#pragma once
 
 #include "opencv2/opencv.hpp"
 
@@ -70,5 +69,3 @@ public:
 	void friction(double g) { vel.x *= g; vel.y *= g; rotationSpeed *= g; }
 	void move(double et) { pos = movedPos(et); rotation = mod360(rotation + rotationSpeed*et/RELATIVE_ET); }
 };
-
-#endif

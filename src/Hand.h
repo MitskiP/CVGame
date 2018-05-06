@@ -1,5 +1,4 @@
-#ifndef HAND_H
-#define HAND_H
+#pragma once
 
 #include "opencv2/opencv.hpp"
 
@@ -32,5 +31,3 @@ public:
 	double distance2(Hand);
 	double distance2(Point);
 };
-
-#endif
