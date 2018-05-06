@@ -140,8 +140,12 @@ Mat &HandTracker::getConnectedComponentsFrame() {
 
 	vector<Vec3b> colors(nLabels);
 	colors[0] = Vec3b(0, 0, 0);
+	int c = 1;
 	for (int i = 1; i < nLabels; i++) {
-		colors[i] = Vec3b(i*255/nLabels, i*255/nLabels, i*255/nLabels);
+		if (drawLabel[i])
+			c++;
+		int val = c*255/(trackedHands.size()+2); //i*255/nLabels
+		colors[i] = Vec3b(val, val, val);
 		//colors[i] = Vec3b(rand()&255, rand()&255, rand()&255);
 	}
 	for (int r = 0; r < skinMask.rows; r++) {
