@@ -33,6 +33,9 @@ void Physics::init(int width, int height, int mbc, bool db, bool ek, bool es, bo
 		resize(face, face, Size(), factor, factor);
 		faces.push_back(face);
 	}
+	ballTexture = imread("res/ball.png", IMREAD_UNCHANGED);
+	float factor = (float)DEFAULT_BALL_RADIUS*2/ballTexture.rows;
+	resize(ballTexture, ballTexture, Size(), factor, factor);
 	
 	updateSpikes();
 }
@@ -44,39 +47,46 @@ void Physics::updateSpikes() {
 		spikePoints[i][2] = Point((i+1)*ww, h);
 	}
 }
-void Physics::generateBall(bool enableMP) {
+void Physics::generateBall(bool safeMode, bool enableMP) {
 	if (standardBallsCount < MAX_BALL_COUNT) {
 		if (total_time - last_ball_creation_time > standardBallsCount*3000/MAX_BALL_COUNT) {
 			last_ball_creation_time = total_time;
 			Ball b = Ball(Point2d(rand()%(w-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS, rand()%(h/4-2*DEFAULT_BALL_RADIUS)+DEFAULT_BALL_RADIUS),
 					Point2d(rand()%10, rand()%10));
 			b.newRotationSpeed();
-			int s = 0;
-			if (enableMP && faces.size() > 1 && (rand()%10) > 7) // 20%
-				s = rand()%(faces.size()-1) + 1;
-			b.setFace(faces[s]);
+			if (safeMode) {
+				b.setFace(ballTexture);
+			} else {
+				int s = 0;
+				if (enableMP && faces.size() > 1 && (rand()%10) > 7) // 20%
+					s = rand()%(faces.size()-1) + 1;
+				b.setFace(faces[s]);
+			}
 			balls.push_back(b);
 			standardBallsCount++;
 		}
 	}
 }
-Ball Physics::generateBlood(int i, float factor) {
+Ball Physics::generateBlood(int i, float factor, bool safeMode) {
 	Point2d dv = Point2d(rand()%BLOOD_SPREAD, rand()%BLOOD_SPREAD);
 	Ball b = Ball(balls[i].getPos(), balls[i].getVel());
 	b.getVel().x = b.getVel().x*factor + dv.x;
 	b.getVel().y = b.getVel().y*factor + dv.y;
 	b.setRadius(DEFAULT_BALL_RADIUS/3);
-	b.setColor(Scalar(0, 0, 255));
+	if (safeMode)
+		b.setColor(Scalar(255, 255, 0));
+	else
+		b.setColor(Scalar(0, 0, 255));
 	b.setType(BallType::BLOOD);
 	b.setTTL(BLOOD_TTL);
 	b.setDamage(DAMAGE_PER_BLOOD);
 	return b;
 }
-bool Physics::killBall(int i) {
+bool Physics::killBall(int i, bool safeMode) {
 	if (disappearingBalls) {
 		if (enableBlood && balls[i].getType() == BallType::DEFAULT) {
 			for (int k = 0; k < BLOOD_AMOUNT; k++) {
-				Ball b = generateBlood(i, (float)4/5);
+				Ball b = generateBlood(i, (float)4/5, safeMode);
 				balls.push_back(b);
 			}
 		}
@@ -88,14 +98,14 @@ bool Physics::killBall(int i) {
 	}
 	return false;
 }
-void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool enableMP) {
+void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool enableMP, bool safeMode) {
 	if (finish)
 		return;
 	total_time += elapsedTime;
-	generateBall(enableMP);
+	generateBall(safeMode, enableMP);
 	for (unsigned int i = 0; i < balls.size(); i++) {
 		if (balls[i].countTTL(elapsedTime)) {
-			if (killBall(i)) {
+			if (killBall(i, safeMode)) {
 				i--;
 				continue;
 			}
@@ -125,7 +135,7 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool
 		} else if (balls[i].getType() == BallType::DEFAULT && y + r >= h - botBorderHeight) {
 			balls[i].getPos().y = h-r-botBorderHeight-1;
 			balls[i].getVel().y = min(balls[i].getVel().y, -balls[i].getVel().y);
-			if (killBall(i)) {
+			if (killBall(i, safeMode)) {
 				i--;
 				continue;
 			}
@@ -156,7 +166,7 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool
 					balls[j].newRotationSpeed(5.0f);
 					if (isGame) {
 						printf("GENERATE BONUS\n");
-						Ball b = generateBlood(i, 0.0f);
+						Ball b = generateBlood(i, 0.0f, safeMode);
 						b.setColor(Scalar(0, 255, 0));
 						b.setDamage(DAMAGE_PER_BLOOD*-5);
 						balls.push_back(b);
@@ -224,7 +234,7 @@ void Physics::tick(double elapsedTime, Mat &labelMask, vector<Hand> &hands, bool
 		}
 		//if (relevant_px > 0.9 * total_px)
 		if (relevant_px == total_px) {
-			if (killBall(i))
+			if (killBall(i, safeMode))
 				i--;
 			continue;
 		}
@@ -325,8 +335,8 @@ void Physics::drawOverlay(Mat &orig, Mat &img, Point c) {
 		}
 	}
 }
-Mat &Physics::draw(Mat &canvas) {
-	if (enableBlood) {
+Mat &Physics::draw(Mat &canvas, bool safeMode) {
+	if (enableBlood /*&& !safeMode*/) {
 		for (int i = 0; i < NUM_SPIKES; i++) {
 			fillConvexPoly(canvas, spikePoints[i], 3, Scalar(255, 255, 255));
 		}

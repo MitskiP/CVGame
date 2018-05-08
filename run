@@ -49,21 +49,26 @@ echo disappearing balls are boring...
 read
 run --max-ball-count 5 --spawn-remove-balls
 clear
-echo koike ball
-read
-run --max-ball-count 5 --spawn-remove-balls --enable-koike
-clear
-echo spin
+#echo koike ball
+echo textured ball with spin
 echo
-echo enable mp with M!
+#echo next: spin
+#read
+#run --max-ball-count 5 --spawn-remove-balls --enable-koike
+#clear
+#echo spin
+#echo
+#echo enable mp with M!
 read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin
 clear
-echo gore
+echo gore / balls filled with water
 read
 run --max-ball-count 5 --spawn-remove-balls --enable-koike --enable-spin --enable-gore --enable-mp
 clear
 echo game
+echo
+echo toggle safe mode with S
 read
 run --game --enable-mp
 

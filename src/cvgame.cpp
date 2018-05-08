@@ -55,6 +55,7 @@ int main(int args, char** argv) {
 	bool trackingDemo = false;
 	
 	bool enableMP = false;
+	bool safeMode = true;
 	
 	// parse command line options
 	for (int i = 1; i < args; i++) {
@@ -169,10 +170,10 @@ int main(int args, char** argv) {
 		
 		// handle tick
 		ht.update(frame, withErosion, withDilation, removeCenterSkin);
-		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands(), enableMP);
+		world.tick(frame_duration.count(), ht.getLabelMask(), ht.getTrackedHands(), enableMP, safeMode);
 		// draw world onto game
 		if (!trackingDemo)
-			world.draw(game);
+			world.draw(game, safeMode);
 
 		// create mat to show
 		//display = frame;
@@ -180,7 +181,7 @@ int main(int args, char** argv) {
 		hconcat(display, border, display);
 		Mat componentsFrame = ht.getConnectedComponentsFrame(trackHands);
 		if (!trackingDemo)
-			componentsFrame = world.draw(componentsFrame);
+			componentsFrame = world.draw(componentsFrame, safeMode);
 		hconcat(display, componentsFrame, display);
 		if (!trackingDemo) {
 			hconcat(display, border, display);
@@ -239,6 +240,8 @@ int main(int args, char** argv) {
 				case 109: // m
 					enableMP = !enableMP;
 					break;
+				case 115: // s
+					safeMode = !safeMode;
 				}
 			}
 		} else {
