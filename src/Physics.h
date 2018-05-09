@@ -5,12 +5,17 @@
 #include "Hand.h"
 
 #define TOTAL_DIRECTIONS 60
-#define BLOOD_AMOUNT 5
+//#define BLOOD_AMOUNT 5
+//#define BLOOD_RADIUS DEFAULT_BALL_RADIUS*0.33
+
+#define BLOOD_AMOUNT 50
+#define BLOOD_RADIUS DEFAULT_BALL_RADIUS*0.2
+
 #define BLOOD_SPREAD 6
 #define BLOOD_TTL 5000
 #define NUM_SPIKES 16
 //#define DAMAGE_PER_BLOOD 300
-#define DAMAGE_PER_BLOOD 1
+#define DAMAGE_PER_BLOOD 5.0/BLOOD_AMOUNT // 5 dmg per default_ball
 
 using namespace cv;
 using namespace std;
@@ -28,7 +33,7 @@ private:
 	
 	int w, h;
 	double gravity, friction;
-	int botBorderHeight;
+	double botBorderHeight;
 
 	Point spikePoints[NUM_SPIKES][3];
 

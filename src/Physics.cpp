@@ -42,7 +42,7 @@ void Physics::init(int width, int height, int mbc, bool db, bool ek, bool es, bo
 void Physics::updateSpikes() {
 	int ww = w / NUM_SPIKES;
 	for (int i = 0; i < NUM_SPIKES; i++) {
-		spikePoints[i][0] = Point(i*ww + ww/2, h - botBorderHeight);
+		spikePoints[i][0] = Point(i*ww + ww/2, h - (int)botBorderHeight);
 		spikePoints[i][1] = Point(i*ww, h);
 		spikePoints[i][2] = Point((i+1)*ww, h);
 	}
@@ -72,7 +72,7 @@ Ball Physics::generateBlood(int i, float factor, bool safeMode) {
 	Ball b = Ball(balls[i].getPos(), balls[i].getVel());
 	b.getVel().x = b.getVel().x*factor + dv.x;
 	b.getVel().y = b.getVel().y*factor + dv.y;
-	b.setRadius(DEFAULT_BALL_RADIUS/3);
+	b.setRadius(BLOOD_RADIUS);
 	if (safeMode)
 		b.setColor(Scalar(255, 255, 0));
 	else
@@ -341,7 +341,7 @@ Mat &Physics::draw(Mat &canvas, bool safeMode) {
 			fillConvexPoly(canvas, spikePoints[i], 3, Scalar(255, 255, 255));
 		}
 	} else {
-		line(canvas, Point(0, h-botBorderHeight), Point(w, h-botBorderHeight), Scalar(255, 255, 255));
+		line(canvas, Point(0, h-(int)botBorderHeight), Point(w, h-(int)botBorderHeight), Scalar(255, 255, 255));
 	}
 
 	//drawOverlay(canvas, face, Point(w/2, h/2));

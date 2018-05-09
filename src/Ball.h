@@ -33,7 +33,7 @@ private:
 	bool colliding;
 	
 	double ttl;
-	int damage;
+	double damage;
 
 	float mod360(float);
 
@@ -60,8 +60,8 @@ public:
 	void newRotationSpeed(float f) { newRotationSpeed(); rotationSpeed *= f; }
 	bool countTTL(double d) { if (ttl == TTL_DISABLED) return false; ttl -= d; return ttl <= 0; }
 	void setTTL(double d) { ttl = d; }
-	int getDamage() { return damage; }
-	void setDamage(int r) { damage = r; }
+	double getDamage() { return damage; }
+	void setDamage(double r) { damage = r; }
 	Mat getFace() { return face; }
 	void setFace(Mat m) { face = m; }
 	

@@ -34,20 +34,17 @@ void Ball::resolveCollision(Ball &ball) {
 
 	// push-pull them apart
 	tmp = im1 / (im1 + im2);
-	Point2d tmpP;
-	tmpP.x = mtd.x * tmp;
-	tmpP.y = mtd.y * tmp;
+	Point2d tmpP = mtd * tmp;
 	pos += tmpP;
 	
 	tmp = im2 / (im1 + im2);
-	tmpP.x = mtd.x * tmp;
-	tmpP.y = mtd.y * tmp;
+	tmpP = mtd * tmp;
 	ball.pos -= tmpP;
 
 	// impact speed
 	Point2d v = vel - ball.vel;
-	mtd.x = mtd.x / norm(mtd);
-	mtd.y = mtd.y / norm(mtd);
+	double mtdLen = norm(mtd);
+	mtd /= mtdLen;
 	double vn = v.dot(mtd);
 
 	// sphere intersecting but moving away from each other already
@@ -57,9 +54,7 @@ void Ball::resolveCollision(Ball &ball) {
 	//double restitution = 0.85;
 	double restitution = 0.75;
 	double i = (-(1.0 + restitution) * vn) / (im1 + im2);
-	Point2d impulse;
-	impulse.x = mtd.x * i;
-	impulse.y = mtd.y * i;
+	Point2d impulse = mtd * i;
 
 	// change in momentum
 	tmpP.x = impulse.x * im1;
