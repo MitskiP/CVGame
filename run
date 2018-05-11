@@ -26,6 +26,11 @@ if [ -z "$1" ]; then
 	make -j8
 fi
 
+
+module=uvcvideo
+lsmod | grep "$module" &>/dev/null || sudo modprobe $(module)
+
+
 clear
 echo tracking demo
 echo

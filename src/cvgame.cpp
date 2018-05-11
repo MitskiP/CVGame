@@ -40,7 +40,9 @@ int main(int args, char** argv) {
 	--enable-gore
 	*/
 
+	#ifdef RELEASE
 	int displayWidth = 1920, displayHeight = 1080;
+	#endif
 	bool enableSpin = false;
 	bool enableKoike = false;
 	bool removeCenterSkin = true;
@@ -84,10 +86,12 @@ int main(int args, char** argv) {
 				MAX_BALL_COUNT = 5;
 		} else if (strcmp(argv[i], "--max-ball-count") == 0 && i+1 < args) {
 			MAX_BALL_COUNT = atoi(argv[(i++)+1]);
+		#ifdef RELEASE
 		} else if (strcmp(argv[i], "-w") == 0 && i+1 < args) {
 			displayWidth = atoi(argv[(i++)+1]);
 		} else if (strcmp(argv[i], "-h") == 0 && i+1 < args) {
 			displayHeight = atoi(argv[(i++)+1]);
+		#endif
 		} else if (strcmp(argv[i], "--with-erosion") == 0) {
 			withErosion = true;
 		} else if (strcmp(argv[i], "--without-erosion") == 0) {
@@ -122,7 +126,9 @@ int main(int args, char** argv) {
 	Physics world;
 	world.init(w, h, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 
+	#ifdef RELEASE
 	float displayFactor = min((float)displayHeight / h, (float)displayWidth / w);
+	#endif
 
 	Mat display;
 	namedWindow("edges",1);
