@@ -223,30 +223,30 @@ int main(int args, char** argv) {
 			if (val > 0) {
 				printf("key = %d\n", val);
 				switch (val) {
-				case 32:  // space
+				case ' ':
 				case 27:  // esc
-				case 113: // q
+				case 'q':
 					cap.release();
 					break;
-				case 114: // r
+				case 'r':
 					world.init(w, h, MAX_BALL_COUNT, disappearingBalls, enableKoike, enableSpin, enableBlood, isGame);
 					break;
-				case 99: // c
+				case 'c':
 					removeCenterSkin = !removeCenterSkin;
 					break;
-				case 101: // e
+				case 'e':
 					withErosion = !withErosion;
 					break;
-				case 100: // d
+				case 'd':
 					withDilation = !withDilation;
 					break;
-				case 116: // t
+				case 't':
 					trackHands = !trackHands;
 					break;
-				case 109: // m
+				case 'm':
 					enableMP = !enableMP;
 					break;
-				case 115: // s
+				case 's':
 					safeMode = !safeMode;
 				}
 			}
