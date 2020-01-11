@@ -5,7 +5,7 @@ SRCDIR = src
 BINDIR = bin
 OBJDIR = obj
 
-LIBS   = `pkg-config opencv --cflags --libs` -lpthread
+LIBS   = `pkg-config opencv4 --cflags --libs` -lpthread
 CFLAGS  += -Wall -Wextra -pedantic -Wno-unused-parameter -c $(LIBS)
 LDFLAGS += $(LIBS)
 

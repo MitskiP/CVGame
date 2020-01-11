@@ -10,14 +10,14 @@ int main(int argc, char** argv) {
 	// Start default camera
 	VideoCapture video(0);
 
-	// With webcam get(CV_CAP_PROP_FPS) does not work.
+	// With webcam get(CAP_PROP_FPS) does not work.
 	// Let's see for ourselves.
 
-	double fps = video.get(CV_CAP_PROP_FPS);
+	double fps = video.get(CAP_PROP_FPS);
 	// If you do not care about backward compatibility
 	// You can use the following instead for OpenCV 3
 	// double fps = video.get(CAP_PROP_FPS);
-	cout << "Frames per second using video.get(CV_CAP_PROP_FPS) : " << fps << endl;
+	cout << "Frames per second using video.get(CAP_PROP_FPS) : " << fps << endl;
 
 
 	// Number of frames to capture

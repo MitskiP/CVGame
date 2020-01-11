@@ -212,7 +212,7 @@ int main(int args, char** argv) {
 		end_time = high_resolution_clock::now();
 		time_span = end_time - start_time;
 		// calculate remaining time to sleep in order to match camera's fps
-		sleep = frame_duration.count() - time_span.count() - 1; // substract 1 so we are always faster than camera
+		sleep = frame_duration.count() - time_span.count() - 1; // substract 1 so we are always ahead of the camera
 		//printf("sleep = %d ms\n", sleep);
 		if (is_first_frame) {
 			sleep = 1;
