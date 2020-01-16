@@ -117,7 +117,8 @@ int main(int args, char** argv) {
 	int h = cap.get(CAP_PROP_FRAME_HEIGHT);
 	
     // initialize mat border
-	Mat border = Mat(h, 1, cap.get(CAP_PROP_FORMAT));
+	// Mat border = Mat(h, 1, cap.get(CAP_PROP_FORMAT));
+	Mat border = Mat(h, 1, CV_8UC3);
 	for (int i = 0; i < h; i++)
 		border.at<Vec3b>(i, 0) = Vec3b(255, 255, 255);
 	
